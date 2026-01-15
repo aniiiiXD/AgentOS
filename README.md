@@ -2,6 +2,30 @@
 
 A microkernel for AI agents. Run multiple AI agents as isolated processes with shared LLM access.
 
+> **"systemd for AI agents"** | **"Docker-lite for autonomous compute"**
+
+## Why AgentOS?
+
+**The Problem:** Python agent frameworks (LangChain, CrewAI, AutoGen) run agents as coroutines or threads. When one agent crashes, leaks memory, or infinite loops - it takes down the entire system.
+
+**The Solution:** AgentOS provides **OS-level isolation**. Each agent is a real process with:
+- **Fault isolation** - One agent crashes, others continue
+- **Resource limits** - Memory/CPU caps enforced by the kernel (cgroups)
+- **Security sandboxing** - Untrusted agents can't access filesystem/network
+- **Fair scheduling** - Shared LLM access with rate limiting
+
+**This is literally why operating systems exist** - and AgentOS brings these guarantees to AI agents.
+
+### What AgentOS Can Do That Python Frameworks Can't
+
+| Scenario | Python Frameworks | AgentOS |
+|----------|-------------------|---------|
+| Agent infinite loops | Entire system hangs | Agent throttled, others continue |
+| Agent memory leak | OOM kills everything | Only that agent killed |
+| Malicious agent code | Full system access | Sandboxed, access denied |
+| 10 agents need LLM | Race conditions | Fair queuing & scheduling |
+| Agent crashes | May corrupt shared state | Clean isolation |
+
 ## What is AgentOS?
 
 AgentOS treats AI agents like operating system processes. It provides:
@@ -105,6 +129,47 @@ python3 agents/examples/thinking_agent.py
 
 # Spawn/kill agents test
 python3 agents/examples/spawn_test.py
+```
+
+## OS-Level Demonstrations
+
+These demos prove why AgentOS must exist - they show capabilities that **only** an OS-level kernel can provide.
+
+### Fault Isolation Demo
+
+Spawns 3 agents: a CPU hog, a memory leaker, and a healthy agent. Proves that misbehaving agents don't crash the system.
+
+```bash
+# User mode (limited isolation)
+python3 agents/examples/fault_isolation_demo.py
+
+# Root mode (full cgroups enforcement)
+sudo ./build/agentos_kernel &
+sudo python3 agents/examples/fault_isolation_demo.py
+```
+
+**What happens:**
+```
+Agent         Status        Notes
+────────────────────────────────────────
+cpu-hog       THROTTLED     CPU limited to 10%
+mem-hog       KILLED        OOM at 50MB limit
+healthy       RUNNING       Unaffected, still working
+```
+
+**Why this matters:** This is literally why operating systems exist. Python frameworks can't do this.
+
+### Individual Stress Test Agents
+
+```bash
+# CPU stress test (infinite loop - gets throttled)
+python3 agents/examples/cpu_hog_agent.py
+
+# Memory stress test (allocates until killed)
+python3 agents/examples/memory_hog_agent.py
+
+# Well-behaved agent (survives while others fail)
+python3 agents/examples/healthy_agent.py
 ```
 
 ## Python SDK Usage
@@ -484,7 +549,11 @@ AgentOS/
 │       ├── hello_agent.py       # Echo test
 │       ├── thinking_agent.py    # LLM interaction
 │       ├── worker_agent.py      # Spawnable worker
-│       └── spawn_test.py        # Agent management test
+│       ├── spawn_test.py        # Agent management test
+│       ├── fault_isolation_demo.py  # OS-level fault isolation demo
+│       ├── cpu_hog_agent.py     # CPU stress test agent
+│       ├── memory_hog_agent.py  # Memory stress test agent
+│       └── healthy_agent.py     # Well-behaved agent
 ├── build/                       # Build output
 ├── CMakeLists.txt              # Build configuration
 ├── vcpkg.json                  # C++ dependencies
@@ -543,13 +612,29 @@ make -j$(nproc)
 # Start kernel
 ./build/agentos_kernel &
 
-# Run tests
+# Run basic tests
 python3 agents/examples/hello_agent.py
 python3 agents/examples/spawn_test.py
 python3 agents/examples/thinking_agent.py
 
+# Run OS-level fault isolation demo
+python3 agents/examples/fault_isolation_demo.py
+
 # Stop kernel
 pkill agentos_kernel
+```
+
+### Running with Full Isolation (requires root)
+
+```bash
+# Start kernel with cgroups enabled
+sudo ./build/agentos_kernel &
+
+# Run fault isolation demo (will enforce memory/CPU limits)
+sudo python3 agents/examples/fault_isolation_demo.py
+
+# Stop kernel
+sudo pkill agentos_kernel
 ```
 
 ## License
