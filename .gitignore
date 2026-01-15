@@ -1,0 +1,46 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled files
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+agentos_kernel
+
+# vcpkg installed packages (large, regenerated on build)
+vcpkg_installed/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Core dumps
+core
+core.*
+
+# Socket files
+*.sock

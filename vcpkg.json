@@ -1,0 +1,10 @@
+{
+  "name": "agentos",
+  "version": "0.1.0",
+  "dependencies": [
+    "fmt",
+    "spdlog",
+    "nlohmann-json",
+    "cpp-httplib"
+  ]
+}
