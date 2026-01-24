@@ -1,4 +1,4 @@
-# AgentOS Kernel Docker Image
+# Clove Kernel Docker Image
 # Multi-stage build for minimal image size
 
 # Stage 1: Build the kernel
@@ -51,10 +51,10 @@ RUN pip3 install --no-cache-dir \
     pyyaml
 
 # Create non-root user
-RUN useradd -m -s /bin/bash agentos
+RUN useradd -m -s /bin/bash clove
 
 # Copy kernel binary
-COPY --from=builder /app/build/agentos_kernel /usr/local/bin/
+COPY --from=builder /app/build/clove_kernel /usr/local/bin/
 
 # Copy relay and agent SDK
 COPY relay/ /app/relay/
@@ -66,12 +66,12 @@ RUN chmod +x /entrypoint.sh
 
 # Create directories for agents and data
 RUN mkdir -p /app/agents/scripts /app/data && \
-    chown -R agentos:agentos /app
+    chown -R clove:clove /app
 
 # Set environment variables
-ENV AGENTOS_HOME=/app
+ENV CLOVE_HOME=/app
 ENV PYTHONPATH=/app
-ENV AGENTOS_DATA_DIR=/app/data
+ENV CLOVE_DATA_DIR=/app/data
 
 # Expose ports
 # 9000 - Kernel IPC (Unix socket proxied via TCP for container access)
@@ -79,10 +79,10 @@ EXPOSE 9000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pgrep agentos_kernel || exit 1
+    CMD pgrep clove_kernel || exit 1
 
 # Run as non-root
-USER agentos
+USER clove
 WORKDIR /app
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -1,7 +1,7 @@
-# AgentOS Docker Compose Configuration
+# Clove Docker Compose Configuration
 #
 # Full stack deployment with:
-# - AgentOS Kernel
+# - Clove Kernel
 # - Relay Server
 # - Multiple kernel instances (optional)
 #
@@ -19,7 +19,7 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
-    container_name: agentos-relay
+    container_name: clove-relay
     command: relay
     ports:
       - "8765:8765"   # WebSocket relay
@@ -32,7 +32,7 @@ services:
     volumes:
       - relay-data:/app/data
     networks:
-      - agentos-net
+      - clove-net
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.connect(('localhost',8765)); s.close()"]
@@ -40,12 +40,12 @@ services:
       timeout: 10s
       retries: 3
 
-  # AgentOS Kernel
+  # Clove Kernel
   kernel:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
-    container_name: agentos-kernel
+    container_name: clove-kernel
     depends_on:
       relay:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
       - kernel-data:/app/data
       - ./agents:/app/agents/scripts:ro
     networks:
-      - agentos-net
+      - clove-net
     restart: unless-stopped
 
   # Development kernel with source code mounted
@@ -65,7 +65,7 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
-    container_name: agentos-kernel-dev
+    container_name: clove-kernel-dev
     profiles:
       - dev
     depends_on:
@@ -80,7 +80,7 @@ services:
       - ../../src:/app/src:ro
       - kernel-dev-data:/app/data
     networks:
-      - agentos-net
+      - clove-net
 
   # Worker kernel for scaling
   worker:
@@ -99,7 +99,7 @@ services:
     volumes:
       - worker-data:/app/data
     networks:
-      - agentos-net
+      - clove-net
     deploy:
       replicas: ${WORKER_REPLICAS:-2}
       resources:
@@ -108,9 +108,9 @@ services:
           memory: 512M
 
 networks:
-  agentos-net:
+  clove-net:
     driver: bridge
-    name: agentos-network
+    name: clove-network
 
 volumes:
   relay-data:

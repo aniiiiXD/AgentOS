@@ -61,6 +61,8 @@ struct StoredValue {
 enum class KernelEventType {
     AGENT_SPAWNED,      // New agent started
     AGENT_EXITED,       // Agent terminated
+    AGENT_RESTARTING,   // Agent is being restarted (hot reload)
+    AGENT_ESCALATED,    // Agent exceeded max restarts, escalating
     MESSAGE_RECEIVED,   // New IPC message arrived
     STATE_CHANGED,      // State store key modified
     SYSCALL_BLOCKED,    // Permission denied
@@ -73,6 +75,8 @@ inline std::string kernel_event_type_to_string(KernelEventType type) {
     switch (type) {
         case KernelEventType::AGENT_SPAWNED:    return "AGENT_SPAWNED";
         case KernelEventType::AGENT_EXITED:     return "AGENT_EXITED";
+        case KernelEventType::AGENT_RESTARTING: return "AGENT_RESTARTING";
+        case KernelEventType::AGENT_ESCALATED:  return "AGENT_ESCALATED";
         case KernelEventType::MESSAGE_RECEIVED: return "MESSAGE_RECEIVED";
         case KernelEventType::STATE_CHANGED:    return "STATE_CHANGED";
         case KernelEventType::SYSCALL_BLOCKED:  return "SYSCALL_BLOCKED";
@@ -86,6 +90,8 @@ inline std::string kernel_event_type_to_string(KernelEventType type) {
 inline KernelEventType kernel_event_type_from_string(const std::string& str) {
     if (str == "AGENT_SPAWNED")    return KernelEventType::AGENT_SPAWNED;
     if (str == "AGENT_EXITED")     return KernelEventType::AGENT_EXITED;
+    if (str == "AGENT_RESTARTING") return KernelEventType::AGENT_RESTARTING;
+    if (str == "AGENT_ESCALATED")  return KernelEventType::AGENT_ESCALATED;
     if (str == "MESSAGE_RECEIVED") return KernelEventType::MESSAGE_RECEIVED;
     if (str == "STATE_CHANGED")    return KernelEventType::STATE_CHANGED;
     if (str == "SYSCALL_BLOCKED")  return KernelEventType::SYSCALL_BLOCKED;

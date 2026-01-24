@@ -227,24 +227,10 @@ class CloveClient:
               thinking_level: str = None,
               temperature: float = None,
               model: str = None) -> dict:
-        """Send a prompt to the LLM via Gemini API.
-
-        Args:
-            prompt: The text prompt to send
-            image: Optional image bytes for multimodal input
-            image_mime_type: MIME type of image (default: "image/jpeg")
-            system_instruction: Optional system instruction for the model
-            thinking_level: Optional thinking level ("low", "medium", "high")
-            temperature: Optional temperature for generation (0.0-1.0)
-            model: Optional model name (default: gemini-2.0-flash)
-
-        Returns:
-            dict with 'success', 'content', 'tokens', and optionally 'error'
-        """
+        """Send a prompt to the LLM via Gemini API."""
         import json
         import base64
 
-        # Build request payload
         payload = {"prompt": prompt}
 
         if image:
@@ -265,7 +251,6 @@ class CloveClient:
         if model:
             payload["model"] = model
 
-        # Send JSON payload
         response = self.call(SyscallOp.SYS_THINK, json.dumps(payload))
         if response:
             try:
@@ -284,21 +269,7 @@ class CloveClient:
               restart_policy: str = "never",
               max_restarts: int = 5,
               restart_window: int = 300) -> Optional[dict]:
-        """Spawn a new sandboxed agent.
-
-        Args:
-            name: Name for the agent
-            script: Path to the Python script to run
-            sandboxed: Whether to run in sandbox (default: True)
-            network: Whether to enable network access (default: False)
-            limits: Resource limits dict (memory, max_pids, cpu_quota)
-            restart_policy: Auto-restart policy - "never", "always", or "on-failure"
-            max_restarts: Maximum restarts within restart_window (default: 5)
-            restart_window: Window in seconds for counting restarts (default: 300)
-
-        Returns:
-            dict with 'id', 'name', 'pid', 'status', 'restart_policy'
-        """
+        """Spawn a new sandboxed agent."""
         import json
         payload = {
             "name": name,
@@ -343,16 +314,7 @@ class CloveClient:
         return []
 
     def exec(self, command: str, cwd: str = None, timeout: int = 30) -> dict:
-        """Execute a shell command.
-
-        Args:
-            command: The shell command to execute
-            cwd: Optional working directory
-            timeout: Timeout in seconds (default: 30)
-
-        Returns:
-            dict with 'success', 'stdout', 'stderr', 'exit_code'
-        """
+        """Execute a shell command."""
         import json
         payload = {
             "command": command,
@@ -370,14 +332,7 @@ class CloveClient:
         return {"success": False, "stdout": "", "stderr": "No response from kernel", "exit_code": -1}
 
     def read_file(self, path: str) -> dict:
-        """Read a file's contents.
-
-        Args:
-            path: Path to the file to read
-
-        Returns:
-            dict with 'success', 'content', 'size'
-        """
+        """Read a file's contents."""
         import json
         payload = {"path": path}
 
@@ -390,16 +345,7 @@ class CloveClient:
         return {"success": False, "content": "", "size": 0, "error": "No response from kernel"}
 
     def write_file(self, path: str, content: str, mode: str = "write") -> dict:
-        """Write content to a file.
-
-        Args:
-            path: Path to the file to write
-            content: Content to write
-            mode: "write" (overwrite) or "append"
-
-        Returns:
-            dict with 'success', 'bytes_written'
-        """
+        """Write content to a file."""
         import json
         payload = {
             "path": path,
@@ -415,19 +361,10 @@ class CloveClient:
                 return {"success": False, "bytes_written": 0, "error": response.payload_str}
         return {"success": False, "bytes_written": 0, "error": "No response from kernel"}
 
-    # =========================================================================
     # IPC - Inter-Agent Communication
-    # =========================================================================
 
     def register_name(self, name: str) -> dict:
-        """Register this agent with a name for IPC.
-
-        Args:
-            name: Unique name for this agent (e.g., "worker-1", "orchestrator")
-
-        Returns:
-            dict with 'success', 'agent_id', 'name'
-        """
+        """Register this agent with a name for IPC."""
         import json
         payload = {"name": name}
 
@@ -440,16 +377,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def send_message(self, message: dict, to: int = None, to_name: str = None) -> dict:
-        """Send a message to another agent.
-
-        Args:
-            message: The message payload (any JSON-serializable dict)
-            to: Target agent ID
-            to_name: Target agent name (alternative to 'to')
-
-        Returns:
-            dict with 'success', 'delivered_to'
-        """
+        """Send a message to another agent."""
         import json
         payload = {"message": message}
 
@@ -467,15 +395,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def recv_messages(self, max_messages: int = 10) -> dict:
-        """Receive pending messages from other agents.
-
-        Args:
-            max_messages: Maximum number of messages to retrieve (default: 10)
-
-        Returns:
-            dict with 'success', 'messages' (list), 'count'
-            Each message has: 'from', 'from_name', 'message', 'age_ms'
-        """
+        """Receive pending messages from other agents."""
         import json
         payload = {"max": max_messages}
 
@@ -488,15 +408,7 @@ class CloveClient:
         return {"success": False, "messages": [], "count": 0, "error": "No response from kernel"}
 
     def broadcast(self, message: dict, include_self: bool = False) -> dict:
-        """Broadcast a message to all registered agents.
-
-        Args:
-            message: The message payload (any JSON-serializable dict)
-            include_self: Whether to include self in broadcast (default: False)
-
-        Returns:
-            dict with 'success', 'delivered_count'
-        """
+        """Broadcast a message to all registered agents."""
         import json
         payload = {
             "message": message,
@@ -511,16 +423,10 @@ class CloveClient:
                 return {"success": False, "delivered_count": 0, "error": response.payload_str}
         return {"success": False, "delivered_count": 0, "error": "No response from kernel"}
 
-    # =========================================================================
     # Permissions
-    # =========================================================================
 
     def get_permissions(self) -> dict:
-        """Get this agent's permissions.
-
-        Returns:
-            dict with 'success', 'permissions'
-        """
+        """Get this agent's permissions."""
         import json
         response = self.call(SyscallOp.SYS_GET_PERMS, "{}")
         if response:
@@ -532,16 +438,7 @@ class CloveClient:
 
     def set_permissions(self, permissions: dict = None, level: str = None,
                        agent_id: int = None) -> dict:
-        """Set agent permissions.
-
-        Args:
-            permissions: Full permissions dict (optional)
-            level: Permission level: "unrestricted", "standard", "sandboxed", "readonly", "minimal"
-            agent_id: Target agent ID (default: self)
-
-        Returns:
-            dict with 'success', 'agent_id'
-        """
+        """Set agent permissions."""
         import json
         payload = {}
 
@@ -560,22 +457,10 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
     # State Store
-    # =========================================================================
 
     def store(self, key: str, value, scope: str = "global", ttl: int = None) -> dict:
-        """Store a key-value pair in the shared state store.
-
-        Args:
-            key: The key to store
-            value: The value to store (must be JSON-serializable)
-            scope: "global" (all agents), "agent" (only this agent), "session" (until restart)
-            ttl: Time-to-live in seconds (optional)
-
-        Returns:
-            dict with 'success', 'key'
-        """
+        """Store a key-value pair in the shared state store."""
         import json
         payload = {
             "key": key,
@@ -594,14 +479,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def fetch(self, key: str) -> dict:
-        """Fetch a value from the shared state store.
-
-        Args:
-            key: The key to fetch
-
-        Returns:
-            dict with 'success', 'exists', 'value', 'scope'
-        """
+        """Fetch a value from the shared state store."""
         import json
         payload = {"key": key}
 
@@ -614,14 +492,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def delete_key(self, key: str) -> dict:
-        """Delete a key from the shared state store.
-
-        Args:
-            key: The key to delete
-
-        Returns:
-            dict with 'success', 'deleted'
-        """
+        """Delete a key from the shared state store."""
         import json
         payload = {"key": key}
 
@@ -634,14 +505,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def list_keys(self, prefix: str = "") -> dict:
-        """List keys in the shared state store.
-
-        Args:
-            prefix: Optional prefix to filter keys
-
-        Returns:
-            dict with 'success', 'keys', 'count'
-        """
+        """List keys in the shared state store."""
         import json
         payload = {"prefix": prefix} if prefix else {}
 
@@ -653,27 +517,11 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
     # HTTP
-    # =========================================================================
 
     def http(self, url: str, method: str = "GET", headers: dict = None,
              body: str = None, timeout: int = 30) -> dict:
-        """Make an HTTP request.
-
-        Args:
-            url: The URL to request
-            method: HTTP method (GET, POST, PUT, DELETE, etc.)
-            headers: Optional request headers
-            body: Optional request body (for POST/PUT)
-            timeout: Request timeout in seconds
-
-        Returns:
-            dict with 'success', 'body', 'status_code'
-
-        Note:
-            Requires HTTP permission and domain to be in whitelist.
-        """
+        """Make an HTTP request."""
         import json
         payload = {
             "url": url,
@@ -694,22 +542,10 @@ class CloveClient:
                 return {"success": False, "body": "", "error": response.payload_str}
         return {"success": False, "body": "", "error": "No response from kernel"}
 
-    # =========================================================================
     # Events (Pub/Sub)
-    # =========================================================================
 
     def subscribe(self, event_types: list) -> dict:
-        """Subscribe to kernel events.
-
-        Args:
-            event_types: List of event types to subscribe to.
-                Available: "AGENT_SPAWNED", "AGENT_EXITED", "AGENT_RESTARTING",
-                          "AGENT_ESCALATED", "MESSAGE_RECEIVED", "STATE_CHANGED",
-                          "SYSCALL_BLOCKED", "RESOURCE_WARNING", "CUSTOM"
-
-        Returns:
-            dict with 'success', 'subscribed' (list of types)
-        """
+        """Subscribe to kernel events."""
         import json
         payload = {"event_types": event_types}
 
@@ -722,14 +558,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def unsubscribe(self, event_types: list) -> dict:
-        """Unsubscribe from kernel events.
-
-        Args:
-            event_types: List of event types to unsubscribe from
-
-        Returns:
-            dict with 'success', 'unsubscribed' (list of types)
-        """
+        """Unsubscribe from kernel events."""
         import json
         payload = {"event_types": event_types}
 
@@ -742,15 +571,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def poll_events(self, max_events: int = 10) -> dict:
-        """Poll for pending events.
-
-        Args:
-            max_events: Maximum number of events to retrieve (default: 10)
-
-        Returns:
-            dict with 'success', 'events' (list), 'count'
-            Each event has: 'type', 'data', 'source_agent_id', 'age_ms'
-        """
+        """Poll for pending events."""
         import json
         payload = {"max": max_events}
 
@@ -763,15 +584,7 @@ class CloveClient:
         return {"success": False, "events": [], "count": 0, "error": "No response from kernel"}
 
     def emit_event(self, event_type: str, data: dict = None) -> dict:
-        """Emit a custom event to all subscribers.
-
-        Args:
-            event_type: Should be "CUSTOM" for user events
-            data: Event data payload
-
-        Returns:
-            dict with 'success', 'delivered_to' (count)
-        """
+        """Emit a custom event to all subscribers."""
         import json
         payload = {
             "event_type": event_type,
@@ -786,23 +599,10 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
-    # World Simulation Methods
-    # =========================================================================
+    # World Simulation
 
     def world_create(self, name: str, config: dict = None) -> dict:
-        """Create a new simulated world.
-
-        Args:
-            name: Name for the world
-            config: World configuration with optional keys:
-                - virtual_filesystem: {initial_files: {...}, writable_patterns: [...]}
-                - network: {mode: "mock", mock_responses: {...}}
-                - chaos: {enabled: bool, failure_rate: float, ...}
-
-        Returns:
-            dict with 'success', 'world_id', 'name'
-        """
+        """Create a new simulated world."""
         import json
         payload = {
             "name": name,
@@ -818,20 +618,9 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_destroy(self, world_id: str, force: bool = False) -> dict:
-        """Destroy a world.
-
-        Args:
-            world_id: ID of the world to destroy
-            force: If True, destroy even if agents are in the world
-
-        Returns:
-            dict with 'success', 'world_id'
-        """
+        """Destroy a world."""
         import json
-        payload = {
-            "world_id": world_id,
-            "force": force
-        }
+        payload = {"world_id": world_id, "force": force}
 
         response = self.call(SyscallOp.SYS_WORLD_DESTROY, json.dumps(payload))
         if response:
@@ -842,11 +631,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_list(self) -> dict:
-        """List all active worlds.
-
-        Returns:
-            dict with 'success', 'worlds' (list), 'count'
-        """
+        """List all active worlds."""
         import json
 
         response = self.call(SyscallOp.SYS_WORLD_LIST, "{}")
@@ -858,17 +643,7 @@ class CloveClient:
         return {"success": False, "worlds": [], "count": 0, "error": "No response from kernel"}
 
     def world_join(self, world_id: str) -> dict:
-        """Join a world.
-
-        When in a world, file and network operations are routed through the
-        world's virtual filesystem and network mock.
-
-        Args:
-            world_id: ID of the world to join
-
-        Returns:
-            dict with 'success', 'world_id'
-        """
+        """Join a world."""
         import json
         payload = {"world_id": world_id}
 
@@ -881,11 +656,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_leave(self) -> dict:
-        """Leave the current world.
-
-        Returns:
-            dict with 'success'
-        """
+        """Leave the current world."""
         import json
 
         response = self.call(SyscallOp.SYS_WORLD_LEAVE, "{}")
@@ -897,22 +668,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_event(self, world_id: str, event_type: str, params: dict = None) -> dict:
-        """Inject a chaos event into a world.
-
-        Event types include:
-            - "disk_full": Simulate full disk
-            - "disk_fail": Simulate disk failure
-            - "network_partition": Simulate network outage
-            - "slow_io": Inject I/O latency
-
-        Args:
-            world_id: ID of the world
-            event_type: Type of chaos event
-            params: Optional parameters for the event
-
-        Returns:
-            dict with 'success', 'world_id', 'event_type'
-        """
+        """Inject a chaos event into a world."""
         import json
         payload = {
             "world_id": world_id,
@@ -929,14 +685,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_state(self, world_id: str) -> dict:
-        """Get the current state and metrics of a world.
-
-        Args:
-            world_id: ID of the world
-
-        Returns:
-            dict with 'success', 'state' containing metrics
-        """
+        """Get the current state and metrics of a world."""
         import json
         payload = {"world_id": world_id}
 
@@ -949,16 +698,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_snapshot(self, world_id: str) -> dict:
-        """Create a snapshot of a world's state.
-
-        The snapshot can be used to restore the world later.
-
-        Args:
-            world_id: ID of the world
-
-        Returns:
-            dict with 'success', 'snapshot' (JSON object)
-        """
+        """Create a snapshot of a world's state."""
         import json
         payload = {"world_id": world_id}
 
@@ -971,15 +711,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def world_restore(self, snapshot: dict, new_world_id: str = None) -> dict:
-        """Restore a world from a snapshot.
-
-        Args:
-            snapshot: The snapshot object from world_snapshot()
-            new_world_id: Optional ID for the restored world (auto-generated if not provided)
-
-        Returns:
-            dict with 'success', 'world_id'
-        """
+        """Restore a world from a snapshot."""
         import json
         payload = {
             "snapshot": snapshot,
@@ -994,26 +726,13 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
-    # Tunnel (Remote Connectivity) Methods
-    # =========================================================================
+    # Tunnel (Remote Connectivity)
 
     def tunnel_connect(self, relay_url: str, machine_id: str = None,
                       token: str = None) -> dict:
-        """Connect the kernel to a relay server for remote agent access.
-
-        Args:
-            relay_url: WebSocket URL of the relay server (e.g., ws://localhost:8765)
-            machine_id: This machine's identifier
-            token: Authentication token for the relay
-
-        Returns:
-            dict with 'success', 'relay_url', 'machine_id'
-        """
+        """Connect the kernel to a relay server for remote agent access."""
         import json
-        payload = {
-            "relay_url": relay_url
-        }
+        payload = {"relay_url": relay_url}
         if machine_id:
             payload["machine_id"] = machine_id
         if token:
@@ -1028,11 +747,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def tunnel_disconnect(self) -> dict:
-        """Disconnect the kernel from the relay server.
-
-        Returns:
-            dict with 'success'
-        """
+        """Disconnect the kernel from the relay server."""
         import json
 
         response = self.call(SyscallOp.SYS_TUNNEL_DISCONNECT, "{}")
@@ -1044,12 +759,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def tunnel_status(self) -> dict:
-        """Get the current tunnel connection status.
-
-        Returns:
-            dict with 'success', 'connected', 'relay_url', 'machine_id',
-                 'remote_agent_count'
-        """
+        """Get the current tunnel connection status."""
         import json
 
         response = self.call(SyscallOp.SYS_TUNNEL_STATUS, "{}")
@@ -1061,12 +771,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def tunnel_list_remotes(self) -> dict:
-        """List remote agents currently connected through the tunnel.
-
-        Returns:
-            dict with 'success', 'agents' (list), 'count'
-            Each agent has: 'agent_id', 'name', 'connected_at'
-        """
+        """List remote agents currently connected through the tunnel."""
         import json
 
         response = self.call(SyscallOp.SYS_TUNNEL_LIST_REMOTES, "{}")
@@ -1079,17 +784,7 @@ class CloveClient:
 
     def tunnel_config(self, relay_url: str = None, machine_id: str = None,
                      token: str = None, reconnect_interval: int = None) -> dict:
-        """Configure tunnel settings without connecting.
-
-        Args:
-            relay_url: WebSocket URL of the relay server
-            machine_id: This machine's identifier
-            token: Authentication token
-            reconnect_interval: Seconds between reconnect attempts
-
-        Returns:
-            dict with 'success'
-        """
+        """Configure tunnel settings without connecting."""
         import json
         payload = {}
         if relay_url:
@@ -1109,21 +804,10 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
-    # Metrics Methods
-    # =========================================================================
+    # Metrics
 
     def get_system_metrics(self) -> dict:
-        """Get system-wide metrics (CPU, memory, disk, network).
-
-        Returns:
-            dict with 'success', 'metrics' containing:
-                - cpu: percent, per_core, count, freq_mhz, load_avg
-                - memory: total, available, used, percent, buffers, cached
-                - swap: total, used, free
-                - disk: read_bytes, write_bytes, read_ops, write_ops
-                - network: bytes_sent, bytes_recv, packets_sent, packets_recv
-        """
+        """Get system-wide metrics (CPU, memory, disk, network)."""
         import json
 
         response = self.call(SyscallOp.SYS_METRICS_SYSTEM, "{}")
@@ -1135,18 +819,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def get_agent_metrics(self, agent_id: int = None) -> dict:
-        """Get metrics for a specific agent.
-
-        Args:
-            agent_id: Agent ID to get metrics for (default: self)
-
-        Returns:
-            dict with 'success', 'metrics' containing:
-                - agent_id, name, pid, status, uptime_ms
-                - process: cpu_percent, memory, io, threads
-                - cgroup: cpu limits/usage, memory limits/usage, pids
-                - kernel_stats: syscall_count, llm_calls, etc.
-        """
+        """Get metrics for a specific agent."""
         import json
         payload = {}
         if agent_id is not None:
@@ -1161,11 +834,7 @@ class CloveClient:
         return {"success": False, "error": "No response from kernel"}
 
     def get_all_agent_metrics(self) -> dict:
-        """Get metrics for all running agents.
-
-        Returns:
-            dict with 'success', 'agents' (list of agent metrics), 'count'
-        """
+        """Get metrics for all running agents."""
         import json
 
         response = self.call(SyscallOp.SYS_METRICS_ALL_AGENTS, "{}")
@@ -1177,19 +846,7 @@ class CloveClient:
         return {"success": False, "agents": [], "error": "No response from kernel"}
 
     def get_cgroup_metrics(self, cgroup_path: str = None) -> dict:
-        """Get cgroup metrics for a sandboxed process.
-
-        Args:
-            cgroup_path: Path relative to /sys/fs/cgroup (e.g., "clove/agent-123")
-                        If not specified, uses the caller's cgroup.
-
-        Returns:
-            dict with 'success', 'metrics' containing:
-                - cpu: usage_usec, throttled_usec, quota, period
-                - memory: current, max, peak, oom_kills
-                - pids: current, max
-                - io: read_bytes, write_bytes
-        """
+        """Get cgroup metrics for a sandboxed process."""
         import json
         payload = {}
         if cgroup_path:
@@ -1203,46 +860,21 @@ class CloveClient:
                 return {"success": False, "error": response.payload_str}
         return {"success": False, "error": "No response from kernel"}
 
-    # =========================================================================
-    # Convenience Aliases for backward compatibility
-    # =========================================================================
+    # Convenience Aliases
 
     def read(self, path: str) -> str:
-        """Alias for read_file that returns just the content string.
-
-        Args:
-            path: Path to the file to read
-
-        Returns:
-            File content as string, or raises exception on error
-        """
+        """Alias for read_file that returns just the content string."""
         result = self.read_file(path)
         if result.get("success"):
             return result.get("content", "")
         raise IOError(result.get("error", "Read failed"))
 
     def write(self, path: str, content: str, mode: str = "write") -> dict:
-        """Alias for write_file.
-
-        Args:
-            path: Path to the file to write
-            content: Content to write
-            mode: "write" (overwrite) or "append"
-
-        Returns:
-            dict with 'success', 'bytes_written'
-        """
+        """Alias for write_file."""
         return self.write_file(path, content, mode)
 
     def register(self, name: str) -> dict:
-        """Alias for register_name.
-
-        Args:
-            name: Unique name for this agent
-
-        Returns:
-            dict with 'success', 'agent_id', 'name'
-        """
+        """Alias for register_name."""
         return self.register_name(name)
 
     def __enter__(self):
@@ -1264,19 +896,3 @@ def connect(socket_path: str = '/tmp/clove.sock') -> CloveClient:
     if not client.connect():
         raise ConnectionError(f"Failed to connect to {socket_path}")
     return client
- 
-
-if __name__ == '__main__':
-    # Quick test
-    print("Clove Python SDK")
-    print("================")
-    print(f"Socket path: /tmp/clove.sock")
-    print(f"Header size: {HEADER_SIZE} bytes")
-    print(f"Magic bytes: 0x{MAGIC_BYTES:08X}")
-    print()
-    print("Usage:")
-    print("  from agentos import CloveClient")
-    print("  ")
-    print("  with CloveClient() as client:")
-    print("      response = client.echo('Hello!')")
-    print("      print(response)")

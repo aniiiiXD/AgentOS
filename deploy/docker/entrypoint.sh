@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# AgentOS Container Entrypoint
+# Clove Container Entrypoint
 # Handles different run modes and connects to relay server
 
 # Default values
@@ -30,12 +30,12 @@ log_error() {
 
 # Start the kernel
 start_kernel() {
-    log_info "Starting AgentOS Kernel..."
+    log_info "Starting Clove Kernel..."
     log_info "  Machine ID: $MACHINE_ID"
     log_info "  Relay URL: $RELAY_URL"
 
     # Start kernel in background
-    /usr/local/bin/agentos_kernel &
+    /usr/local/bin/clove_kernel &
     KERNEL_PID=$!
 
     # Wait for kernel socket

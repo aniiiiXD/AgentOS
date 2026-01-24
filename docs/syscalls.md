@@ -43,9 +43,14 @@
 
 | Op | Name | Payload | Response |
 |----|------|---------|----------|
-| `0x10` | SPAWN | `{"name", "script", "sandboxed?", "network?", "limits?"}` | `{"success", "agent_id", "pid"}` |
+| `0x10` | SPAWN | `{"name", "script", "sandboxed?", "network?", "limits?", "restart_policy?", "max_restarts?", "restart_window?"}` | `{"success", "agent_id", "pid", "restart_policy"}` |
 | `0x11` | KILL | `{"name"}` or `{"id"}` | `{"killed", "agent_id"}` |
 | `0x12` | LIST | — | `[{"id", "name", "pid", "state", "uptime_ms"}]` |
+
+**Restart configuration:**
+- `restart_policy`: `"never"` (default), `"on-failure"`, or `"always"`
+- `max_restarts`: Maximum restarts allowed within `restart_window` (default: 5)
+- `restart_window`: Time window in seconds for counting restarts (default: 300)
 
 ### IPC (Inter-Agent Communication)
 
@@ -91,7 +96,11 @@
 | `0x62` | POLL_EVENTS | `{"max?"}` | `{"success", "events": [...], "count"}` |
 | `0x63` | EMIT | `{"event_type", "data"}` | `{"success", "delivered_to"}` |
 
-**Event types**: `AGENT_SPAWNED`, `AGENT_EXITED`, `MESSAGE_RECEIVED`, `STATE_CHANGED`, `SYSCALL_BLOCKED`, `RESOURCE_WARNING`, `CUSTOM`
+**Event types**: `AGENT_SPAWNED`, `AGENT_EXITED`, `AGENT_RESTARTING`, `AGENT_ESCALATED`, `MESSAGE_RECEIVED`, `STATE_CHANGED`, `SYSCALL_BLOCKED`, `RESOURCE_WARNING`, `CUSTOM`
+
+**Restart events:**
+- `AGENT_RESTARTING`: Emitted when an agent is being auto-restarted. Data: `{"agent_name", "restart_count", "exit_code"}`
+- `AGENT_ESCALATED`: Emitted when an agent exceeds `max_restarts` within the restart window. Data: `{"agent_name", "restart_count", "exit_code"}`
 
 **Event structure**: `{"type", "data", "source_agent_id", "age_ms"}`
 
@@ -211,7 +220,9 @@ with CloveClient() as c:
     c.exec("ls -la")                            # EXEC
     c.read_file("/tmp/test.txt")                # READ
     c.write_file("/tmp/out.txt", "data")        # WRITE
-    c.spawn("worker", "print('hi')")            # SPAWN
+    c.spawn("worker", "/path/to/agent.py",       # SPAWN
+            restart_policy="on-failure",
+            max_restarts=3)
     c.kill(name="worker")                       # KILL
     c.list_agents()                             # LIST
     c.register_name("orchestrator")             # REGISTER
@@ -225,7 +236,7 @@ with CloveClient() as c:
     c.delete_key("key")                         # DELETE
     c.list_keys("prefix:")                      # KEYS
     c.http("https://api.example.com/data")      # HTTP
-    c.subscribe(["AGENT_SPAWNED", "CUSTOM"])    # SUBSCRIBE
+    c.subscribe(["AGENT_SPAWNED", "AGENT_RESTARTING", "CUSTOM"])  # SUBSCRIBE
     c.poll_events()                             # POLL_EVENTS
     c.emit_event("CUSTOM", {"msg": "hello"})    # EMIT
     c.unsubscribe(["CUSTOM"])                   # UNSUBSCRIBE

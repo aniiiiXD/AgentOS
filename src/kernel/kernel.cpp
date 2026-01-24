@@ -77,6 +77,22 @@ bool Kernel::init() {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
+    // Set up restart event callback for auto-recovery notifications
+    agent_manager_->set_restart_event_callback(
+        [this](const std::string& event_type, const std::string& agent_name,
+               uint32_t restart_count, int exit_code) {
+            json event_data;
+            event_data["agent_name"] = agent_name;
+            event_data["restart_count"] = restart_count;
+            event_data["exit_code"] = exit_code;
+
+            if (event_type == "AGENT_RESTARTING") {
+                emit_event(KernelEventType::AGENT_RESTARTING, event_data, 0);
+            } else if (event_type == "AGENT_ESCALATED") {
+                emit_event(KernelEventType::AGENT_ESCALATED, event_data, 0);
+            }
+        });
+
     // Initialize tunnel client
     if (tunnel_client_->init()) {
         spdlog::info("Tunnel client initialized");
@@ -125,8 +141,11 @@ void Kernel::run() {
         // Process tunnel events (syscalls from remote agents)
         process_tunnel_events();
 
-        // Reap dead agents periodically
-        agent_manager_->reap_agents();
+        // Reap dead agents and queue restarts if needed
+        agent_manager_->reap_and_restart_agents();
+
+        // Process any pending restarts (with backoff)
+        agent_manager_->process_pending_restarts();
     }
 
     spdlog::info("Kernel shutting down...");
@@ -421,6 +440,12 @@ ipc::Message Kernel::handle_spawn(const ipc::Message& msg) {
             config.limits.cpu_quota_us = lim.value("cpu_quota", 100000);
         }
 
+        // Restart configuration
+        config.restart.policy = runtime::restart_policy_from_string(
+            j.value("restart_policy", "never"));
+        config.restart.max_restarts = j.value("max_restarts", 5);
+        config.restart.restart_window_sec = j.value("restart_window", 300);
+
         if (config.script_path.empty()) {
             return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_SPAWN,
                 R"({"error": "script path required"})");
@@ -450,6 +475,7 @@ ipc::Message Kernel::handle_spawn(const ipc::Message& msg) {
         response["name"] = agent->name();
         response["pid"] = agent->pid();
         response["status"] = "running";
+        response["restart_policy"] = runtime::restart_policy_to_string(config.restart.policy);
 
         // Emit AGENT_SPAWNED event
         json event_data;

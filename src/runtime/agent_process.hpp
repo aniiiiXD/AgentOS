@@ -4,9 +4,42 @@
 #include <vector>
 #include <functional>
 #include <cstdint>
+#include <chrono>
+#include <unordered_map>
 #include "runtime/sandbox.hpp"
 
 namespace agentos::runtime {
+
+// Restart policy for automatic agent recovery
+enum class RestartPolicy {
+    NEVER,       // Never restart (default)
+    ALWAYS,      // Always restart regardless of exit code
+    ON_FAILURE   // Restart only on non-zero exit code
+};
+
+inline RestartPolicy restart_policy_from_string(const std::string& str) {
+    if (str == "always") return RestartPolicy::ALWAYS;
+    if (str == "on-failure" || str == "on_failure") return RestartPolicy::ON_FAILURE;
+    return RestartPolicy::NEVER;
+}
+
+inline const char* restart_policy_to_string(RestartPolicy policy) {
+    switch (policy) {
+        case RestartPolicy::ALWAYS: return "always";
+        case RestartPolicy::ON_FAILURE: return "on-failure";
+        default: return "never";
+    }
+}
+
+// Configuration for automatic restart behavior
+struct RestartConfig {
+    RestartPolicy policy = RestartPolicy::NEVER;
+    uint32_t max_restarts = 5;            // Max restarts within window
+    uint32_t restart_window_sec = 300;    // Window for counting restarts (seconds)
+    uint32_t backoff_initial_ms = 1000;   // Initial backoff delay
+    uint32_t backoff_max_ms = 60000;      // Maximum backoff delay
+    double backoff_multiplier = 2.0;      // Exponential backoff multiplier
+};
 
 // Agent configuration
 struct AgentConfig {
@@ -21,6 +54,9 @@ struct AgentConfig {
     // Sandbox options
     bool sandboxed = true;
     bool enable_network = false;
+
+    // Restart configuration
+    RestartConfig restart;
 };
 
 // Agent state
@@ -153,14 +189,51 @@ public:
     // Stop all agents
     void stop_all();
 
-    // Check for dead agents and clean up
-    void reap_agents();
+    // Check for dead agents and handle restarts
+    void reap_and_restart_agents();
+
+    // Process pending restarts (called from main loop)
+    void process_pending_restarts();
+
+    // Set event callback for restart events (AGENT_RESTARTING, AGENT_ESCALATED)
+    using RestartEventCallback = std::function<void(const std::string& event_type,
+                                                     const std::string& agent_name,
+                                                     uint32_t restart_count,
+                                                     int exit_code)>;
+    void set_restart_event_callback(RestartEventCallback callback);
+
+    // Legacy method (now calls reap_and_restart_agents)
+    void reap_agents() { reap_and_restart_agents(); }
 
 private:
     std::string kernel_socket_;
     std::unordered_map<std::string, std::shared_ptr<AgentProcess>> agents_by_name_;
     std::unordered_map<uint32_t, std::shared_ptr<AgentProcess>> agents_by_id_;
     SandboxManager sandbox_manager_;
+
+    // Restart state tracking (survives agent death)
+    struct RestartState {
+        uint32_t restart_count = 0;
+        std::chrono::steady_clock::time_point window_start;
+        uint32_t consecutive_failures = 0;
+        bool escalated = false;
+    };
+    std::unordered_map<std::string, RestartState> restart_states_;
+    std::unordered_map<std::string, AgentConfig> saved_configs_;
+
+    // Pending restart queue
+    struct PendingRestart {
+        std::string agent_name;
+        std::chrono::steady_clock::time_point scheduled_time;
+        AgentConfig config;
+    };
+    std::vector<PendingRestart> pending_restarts_;
+
+    // Event callback for restart notifications
+    RestartEventCallback restart_event_callback_;
+
+    // Helper to calculate backoff delay
+    uint32_t calculate_backoff_delay(const RestartConfig& config, uint32_t consecutive_failures);
 };
 
 } // namespace agentos::runtime

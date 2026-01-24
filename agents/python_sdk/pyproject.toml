@@ -7,48 +7,29 @@ name = "clove-sdk"
 version = "0.1.0"
 description = "Python SDK for the Clove microkernel - OS-level isolation for AI agents"
 readme = "README.md"
-requires-python = ">=3.7"
-authors = [
-    {name = "Clove Team"}
-]
+requires-python = ">=3.10"
+authors = [{name = "Clove Team"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
-
-dependencies = [
-    "websockets>=12.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
-remote = [
-    "websockets>=12.0",
-    "aiohttp>=3.8",
-]
-llm = [
-    "google-genai>=1.0.0",
-]
-all = [
-    "websockets>=12.0",
-    "aiohttp>=3.8",
-    "google-genai>=1.0.0",
-]
+remote = ["websockets>=12.0", "aiohttp>=3.8"]
+llm = ["google-genai>=1.0.0"]
+all = ["websockets>=12.0", "aiohttp>=3.8", "google-genai>=1.0.0"]
+dev = ["pytest>=7.0", "black>=23.0", "mypy>=1.0", "pytest-asyncio>=0.21"]
 
-dev = [
-    "pytest>=7.0",
-    "black>=23.0",
-    "mypy>=1.0",
-    "pytest-asyncio>=0.21",
-]
+[project.urls]
+Homepage = "https://github.com/anixd/clove"
+Repository = "https://github.com/anixd/clove"
+Documentation = "https://github.com/anixd/clove#readme"
 
-[tool.setuptools]
-py-modules = ["agentos", "agentic", "fleet_client", "remote_client", "clove"]
-
-[tool.setuptools.package-data]
-"*" = ["py.typed"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["clove_sdk*"]

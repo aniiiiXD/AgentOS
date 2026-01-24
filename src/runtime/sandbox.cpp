@@ -360,12 +360,27 @@ bool Sandbox::is_running() const {
         return false;
     }
 
-    // Check if process is still alive
-    if (kill(child_pid_, 0) < 0) {
+    // Use waitpid with WNOHANG to check if child has exited (including zombies)
+    int status;
+    pid_t result = waitpid(child_pid_, &status, WNOHANG);
+
+    if (result == child_pid_) {
+        // Child has exited - update state and exit code
+        Sandbox* mutable_this = const_cast<Sandbox*>(this);
+        if (WIFEXITED(status)) {
+            mutable_this->exit_code_ = WEXITSTATUS(status);
+        } else if (WIFSIGNALED(status)) {
+            mutable_this->exit_code_ = 128 + WTERMSIG(status);
+        }
+        mutable_this->state_ = SandboxState::STOPPED;
+        return false;
+    } else if (result == 0) {
+        // Child is still running
+        return true;
+    } else {
+        // Error - process doesn't exist
         return false;
     }
-
-    return true;
 }
 
 void Sandbox::set_event_callback(SandboxEventCallback callback) {
