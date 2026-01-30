@@ -14,6 +14,7 @@
 #include <vector>
 #include "kernel/config.hpp"
 #include "ipc/protocol.hpp"
+#include "services/llm/client.hpp"
 
 namespace clove::ipc {
 class SocketServer;
@@ -49,6 +50,7 @@ class Reactor;
 class StateStore;
 class SyscallRouter;
 class AgentMailboxRegistry;
+class LlmQueue;
 
 class Kernel {
 public:
@@ -60,6 +62,8 @@ public:
         std::unique_ptr<runtime::AgentManager> agent_manager;
         std::unique_ptr<worlds::WorldEngine> world_engine;
         std::unique_ptr<services::tunnel::TunnelClient> tunnel_client;
+        std::unique_ptr<services::llm::LLMClient> llm_client;
+        std::unique_ptr<LlmQueue> llm_queue;
         std::unique_ptr<metrics::MetricsCollector> metrics_collector;
         std::unique_ptr<AuditLogger> audit_logger;
         std::unique_ptr<ExecutionLogger> execution_logger;
@@ -106,6 +110,8 @@ private:
     std::unique_ptr<runtime::AgentManager> agent_manager_;
     std::unique_ptr<worlds::WorldEngine> world_engine_;
     std::unique_ptr<services::tunnel::TunnelClient> tunnel_client_;
+    std::unique_ptr<services::llm::LLMClient> llm_client_;
+    std::unique_ptr<LlmQueue> llm_queue_;
     std::unique_ptr<metrics::MetricsCollector> metrics_collector_;
     std::unique_ptr<AuditLogger> audit_logger_;
     std::unique_ptr<ExecutionLogger> execution_logger_;

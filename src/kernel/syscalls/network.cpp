@@ -1,6 +1,7 @@
 #include "kernel/syscall_handlers.hpp"
 #include "kernel/syscall_router.hpp"
 #include "kernel/async_task_manager.hpp"
+#include "kernel/async_helpers.hpp"
 #include "kernel/permissions_store.hpp"
 #include "worlds/world_engine.hpp"
 #include <spdlog/spdlog.h>
@@ -34,6 +35,13 @@ ipc::Message NetworkSyscalls::http_sync(KernelContext& context, const ipc::Messa
         json response;
         response["success"] = false;
         response["error"] = "Permission denied: HTTP not allowed";
+        return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
+    }
+
+    if (!perms.can_http_method(method)) {
+        json response;
+        response["success"] = false;
+        response["error"] = "Permission denied: HTTP method not allowed";
         return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
     }
 
@@ -118,7 +126,7 @@ ipc::Message NetworkSyscalls::handle_http(const ipc::Message& msg) {
         return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
     }
 
-    bool async = j.value("async", false);
+    bool async = async_helpers::should_async(j, true);
     if (async) {
         std::string url = j.value("url", "");
         if (url.empty()) {
@@ -135,6 +143,13 @@ ipc::Message NetworkSyscalls::handle_http(const ipc::Message& msg) {
             response["error"] = "Permission denied: HTTP not allowed";
             return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
         }
+        std::string method = j.value("method", "GET");
+        if (!perms.can_http_method(method)) {
+            json response;
+            response["success"] = false;
+            response["error"] = "Permission denied: HTTP method not allowed";
+            return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
+        }
 
         std::string domain = PermissionChecker::extract_domain(url);
         if (!perms.can_access_domain(domain)) {
@@ -144,33 +159,7 @@ ipc::Message NetworkSyscalls::handle_http(const ipc::Message& msg) {
             return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
         }
 
-        uint64_t request_id = j.value("request_id", 0ULL);
-        if (request_id == 0) {
-            request_id = context_.async_tasks.next_request_id();
-        }
-
-        std::string payload = msg.payload_str();
-        context_.async_tasks.submit(msg.agent_id, msg.opcode, request_id,
-            [this, agent_id = msg.agent_id, payload]() {
-                try {
-                    json task_json = json::parse(payload);
-                    task_json["async"] = false;
-                    ipc::Message task_msg(agent_id, ipc::SyscallOp::SYS_HTTP, task_json.dump());
-                    return http_sync(context_, task_msg, task_json);
-                } catch (const std::exception& e) {
-                    json response;
-                    response["success"] = false;
-                    response["error"] = std::string("invalid request: ") + e.what();
-                    return ipc::Message(agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
-                }
-            });
-
-        json response;
-        response["success"] = true;
-        response["async"] = true;
-        response["request_id"] = request_id;
-        response["status"] = "accepted";
-        return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HTTP, response.dump());
+        return async_helpers::submit_async(context_, msg, j, http_sync);
     }
 
     return http_sync(context_, msg, j);

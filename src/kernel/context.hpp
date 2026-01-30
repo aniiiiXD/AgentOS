@@ -12,6 +12,7 @@ class EventBus;
 class AgentMailboxRegistry;
 class PermissionsStore;
 class AsyncTaskManager;
+class LlmQueue;
 
 } // namespace clove::kernel
 
@@ -52,6 +53,7 @@ struct KernelContext {
     AgentMailboxRegistry& mailbox_registry;
     PermissionsStore& permissions_store;
     AsyncTaskManager& async_tasks;
+    LlmQueue& llm_queue;
 };
 
 } // namespace clove::kernel

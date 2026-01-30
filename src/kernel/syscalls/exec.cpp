@@ -1,6 +1,7 @@
 #include "kernel/syscall_handlers.hpp"
 #include "kernel/syscall_router.hpp"
 #include "kernel/async_task_manager.hpp"
+#include "kernel/async_helpers.hpp"
 #include "kernel/permissions_store.hpp"
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
@@ -97,7 +98,7 @@ ipc::Message ExecSyscalls::handle_exec(const ipc::Message& msg) {
         return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_EXEC, response.dump());
     }
 
-    bool async = j.value("async", false);
+    bool async = async_helpers::should_async(j, true);
     if (async) {
         std::string command = j.value("command", "");
         if (command.empty()) {
@@ -121,36 +122,7 @@ ipc::Message ExecSyscalls::handle_exec(const ipc::Message& msg) {
             return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_EXEC, response.dump());
         }
 
-        uint64_t request_id = j.value("request_id", 0ULL);
-        if (request_id == 0) {
-            request_id = context_.async_tasks.next_request_id();
-        }
-
-        std::string payload = msg.payload_str();
-        context_.async_tasks.submit(msg.agent_id, msg.opcode, request_id,
-            [this, agent_id = msg.agent_id, payload]() {
-                try {
-                    json task_json = json::parse(payload);
-                    task_json["async"] = false;
-                    ipc::Message task_msg(agent_id, ipc::SyscallOp::SYS_EXEC, task_json.dump());
-                    return exec_sync(context_, task_msg, task_json);
-                } catch (const std::exception& e) {
-                    json response;
-                    response["success"] = false;
-                    response["error"] = std::string("invalid request: ") + e.what();
-                    response["stdout"] = "";
-                    response["stderr"] = "";
-                    response["exit_code"] = -1;
-                    return ipc::Message(agent_id, ipc::SyscallOp::SYS_EXEC, response.dump());
-                }
-            });
-
-        json response;
-        response["success"] = true;
-        response["async"] = true;
-        response["request_id"] = request_id;
-        response["status"] = "accepted";
-        return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_EXEC, response.dump());
+        return async_helpers::submit_async(context_, msg, j, exec_sync);
     }
 
     return exec_sync(context_, msg, j);

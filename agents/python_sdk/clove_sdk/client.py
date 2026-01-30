@@ -82,6 +82,9 @@ class SyscallOp(IntEnum):
     SYS_REPLAY_STATUS = 0x74       # Get replay status
     # Async Results
     SYS_ASYNC_POLL = 0x80          # Poll async syscall results
+    # Kernel info / capabilities
+    SYS_LLM_REPORT = 0xF0          # Report SDK LLM usage to kernel
+    SYS_HELLO = 0xFE               # Handshake / capability query
     SYS_EXIT = 0xFF   # Graceful shutdown
 
 
@@ -224,6 +227,17 @@ class CloveClient:
         return self.recv()
 
     # Convenience methods
+    def hello(self) -> dict:
+        """Query kernel version and capabilities."""
+        import json
+        response = self.call(SyscallOp.SYS_HELLO, "{}")
+        if response:
+            try:
+                return json.loads(response.payload_str)
+            except json.JSONDecodeError:
+                return {"success": False, "error": response.payload_str}
+        return {"success": False, "error": "No response from kernel"}
+
     def echo(self, message: str) -> Optional[str]:
         """Echo a message (for testing)"""
         response = self.call(SyscallOp.SYS_NOOP, message)
@@ -244,6 +258,7 @@ class CloveClient:
               request_id: int = None) -> dict:
         """Send a prompt to the LLM via local LLM service (not the kernel)."""
         import base64
+        import json
         from .llm_service import call_llm_service
 
         payload = {"prompt": prompt}
@@ -268,7 +283,15 @@ class CloveClient:
         if async_ or request_id is not None:
             payload["async"] = False
 
-        return call_llm_service(payload)
+        result = call_llm_service(payload)
+
+        # Report LLM usage to kernel if connected
+        if self._sock and result.get("success"):
+            tokens = int(result.get("tokens", 0) or 0)
+            report = {"tokens": tokens, "success": True}
+            self.call(SyscallOp.SYS_LLM_REPORT, json.dumps(report))
+
+        return result
 
     def exit(self) -> bool:
         """Request graceful exit"""
@@ -364,12 +387,11 @@ class CloveClient:
         import json
         payload = {
             "command": command,
-            "timeout": timeout
+            "timeout": timeout,
+            "async": async_
         }
         if cwd:
             payload["cwd"] = cwd
-        if async_:
-            payload["async"] = True
         if request_id is not None:
             payload["request_id"] = request_id
 
@@ -577,15 +599,14 @@ class CloveClient:
         payload = {
             "url": url,
             "method": method,
-            "timeout": timeout
+            "timeout": timeout,
+            "async": async_
         }
 
         if headers:
             payload["headers"] = headers
         if body:
             payload["body"] = body
-        if async_:
-            payload["async"] = True
         if request_id is not None:
             payload["request_id"] = request_id
 

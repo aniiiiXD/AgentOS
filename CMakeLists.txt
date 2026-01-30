@@ -62,6 +62,7 @@ add_executable(clove_kernel
     src/kernel/ipc_mailbox.cpp
     src/kernel/permissions_store.cpp
     src/kernel/async_task_manager.cpp
+    src/kernel/llm_queue.cpp
     src/kernel/syscalls/async.cpp
     src/kernel/syscalls/agents.cpp
     src/kernel/syscalls/audit.cpp
@@ -82,6 +83,7 @@ add_executable(clove_kernel
     src/runtime/agent/process.cpp
     src/runtime/agent/manager.cpp
     src/runtime/agent/types.cpp
+    src/services/llm/client.cpp
     src/services/tunnel/client.cpp
     src/metrics/metrics.cpp
     src/worlds/virtual_fs.cpp

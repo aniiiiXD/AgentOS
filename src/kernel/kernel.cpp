@@ -7,12 +7,14 @@
 #include "kernel/event_bus.hpp"
 #include "kernel/execution_log.hpp"
 #include "kernel/ipc_mailbox.hpp"
+#include "kernel/llm_queue.hpp"
 #include "kernel/permissions_store.hpp"
 #include "kernel/reactor.hpp"
 #include "kernel/state_store.hpp"
 #include "ipc/transport/socket_server.hpp"
 #include "metrics/metrics.hpp"
 #include "runtime/agent/manager.hpp"
+#include "services/llm/client.hpp"
 #include "services/tunnel/client.hpp"
 #include "worlds/world_engine.hpp"
 #include <spdlog/spdlog.h>
@@ -51,6 +53,8 @@ Kernel::Kernel(const Config& config, Dependencies deps)
     agent_manager_ = std::move(deps.agent_manager);
     world_engine_ = std::move(deps.world_engine);
     tunnel_client_ = std::move(deps.tunnel_client);
+    llm_client_ = std::move(deps.llm_client);
+    llm_queue_ = std::move(deps.llm_queue);
     metrics_collector_ = std::move(deps.metrics_collector);
     audit_logger_ = std::move(deps.audit_logger);
     execution_logger_ = std::move(deps.execution_logger);
@@ -74,6 +78,15 @@ Kernel::Kernel(const Config& config, Dependencies deps)
     }
     if (!tunnel_client_) {
         tunnel_client_ = std::make_unique<clove::services::tunnel::TunnelClient>();
+    }
+    if (!llm_client_) {
+        services::llm::LLMConfig llm_config;
+        llm_config.api_key = config.gemini_api_key;
+        llm_config.model = config.llm_model;
+        llm_client_ = std::make_unique<services::llm::LLMClient>(llm_config);
+    }
+    if (!llm_queue_) {
+        llm_queue_ = std::make_unique<LlmQueue>(*llm_client_);
     }
     if (!metrics_collector_) {
         metrics_collector_ = std::make_unique<clove::metrics::MetricsCollector>();
@@ -114,7 +127,8 @@ Kernel::Kernel(const Config& config, Dependencies deps)
         *event_bus_,
         *mailbox_registry_,
         *permissions_store_,
-        *async_tasks_
+        *async_tasks_,
+        *llm_queue_
     });
 
     syscall_router_ = std::make_unique<SyscallRouter>();
@@ -144,6 +158,20 @@ Kernel::Kernel(const Config& config, Dependencies deps)
         [](const ipc::Message& msg) {
             spdlog::info("Agent {} requested exit", msg.agent_id);
             return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_EXIT, "goodbye");
+        });
+
+    syscall_router_->register_handler(ipc::SyscallOp::SYS_HELLO,
+        [](const ipc::Message& msg) {
+            json response;
+            response["success"] = true;
+            response["protocol_version"] = ipc::PROTOCOL_VERSION;
+            response["kernel_version"] = "0.1.0";
+            response["features"] = {
+                {"llm_in_kernel", false},
+                {"sys_think_stub", true},
+                {"async_default_exec_http", true}
+            };
+            return ipc::Message(msg.agent_id, ipc::SyscallOp::SYS_HELLO, response.dump());
         });
 
     for (auto& module : modules_) {
@@ -229,6 +257,9 @@ bool Kernel::init() {
 
     spdlog::info("Kernel initialized successfully");
     spdlog::info("Sandboxing: {}", config_.enable_sandboxing ? "enabled" : "disabled");
+    spdlog::info("LLM: {} ({})",
+        llm_client_->is_configured() ? "configured" : "not configured",
+        llm_client_->config().model);
     spdlog::info("Tunnel: {}", !config_.relay_url.empty() ? "configured" : "not configured");
     return true;
 }

@@ -25,6 +25,7 @@ Note: LLM calls are handled by the SDK via `agents/llm_service`. The kernel no l
 | Op | Name | Payload | Response |
 |----|------|---------|----------|
 | `0x00` | NOOP | `string` | Same string (echo) |
+| `0xFE` | HELLO | `{}` | `{"success", "protocol_version", "kernel_version", "features"}` |
 | `0xFF` | EXIT | — | Acknowledgment |
 
 ### LLM
@@ -32,6 +33,7 @@ Note: LLM calls are handled by the SDK via `agents/llm_service`. The kernel no l
 | Op | Name | Payload | Response |
 |----|------|---------|----------|
 | `0x01` | THINK | `{"prompt", "image?", "system_instruction?", "thinking_level?", "temperature?", "model?"}` | Error stub (kernel-disabled) |
+| `0xF0` | LLM_REPORT | `{"tokens", "success?"}` | `{"success", "tokens", "quota_exceeded", "error?"}` |
 
 ### Filesystem
 
@@ -40,6 +42,8 @@ Note: LLM calls are handled by the SDK via `agents/llm_service`. The kernel no l
 | `0x02` | EXEC | `{"command", "cwd?", "timeout?", "async?", "request_id?"}` | `{"success", "stdout", "stderr", "exit_code"}` or `{"success", "async", "request_id", "status"}` |
 | `0x03` | READ | `{"path"}` | `{"success", "content", "size"}` |
 | `0x04` | WRITE | `{"path", "content", "mode?"}` | `{"success", "bytes_written"}` |
+
+Note: If `async` is omitted for EXEC or HTTP, the kernel defaults to async execution.
 
 ### Agent Management
 

@@ -25,7 +25,7 @@ enum class PermissionLevel {
 // Agent permissions structure
 struct AgentPermissions {
     // Syscall permissions
-    bool can_exec = true;
+    bool can_exec = false;
     bool can_read = true;
     bool can_write = true;
     bool can_think = true;
@@ -43,6 +43,7 @@ struct AgentPermissions {
 
     // Network restrictions
     std::vector<std::string> allowed_domains;      // For HTTP, empty = none
+    std::vector<std::string> allowed_http_methods; // For HTTP, empty = none
 
     // Resource limits
     uint64_t max_llm_tokens = 0;        // 0 = unlimited
@@ -73,6 +74,7 @@ struct AgentPermissions {
 
     // Check if a domain is allowed for HTTP
     bool can_access_domain(const std::string& domain) const;
+    bool can_http_method(const std::string& method) const;
 
     // Check LLM quota
     bool can_use_llm(uint32_t estimated_tokens = 0) const;

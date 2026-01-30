@@ -19,6 +19,7 @@ namespace clove::ipc {
 constexpr uint32_t MAGIC_BYTES = 0x41474E54; // "AGNT" in hex
 constexpr size_t HEADER_SIZE = 17;
 constexpr size_t MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max
+constexpr uint16_t PROTOCOL_VERSION = 1;
 
 // Syscall operations
 enum class SyscallOp : uint8_t {
@@ -84,6 +85,9 @@ enum class SyscallOp : uint8_t {
     SYS_REPLAY_STATUS  = 0x74,  // Get replay status
     // Async Results
     SYS_ASYNC_POLL     = 0x80,  // Poll for async syscall results
+    // Kernel info / capabilities
+    SYS_LLM_REPORT     = 0xF0,  // Report SDK LLM usage to kernel
+    SYS_HELLO          = 0xFE,  // Handshake / capability query
     SYS_EXIT   = 0xFF   // Graceful shutdown
 };
 
@@ -254,6 +258,8 @@ inline const char* opcode_to_string(SyscallOp op) {
         case SyscallOp::SYS_REPLAY_START:   return "REPLAY_START";
         case SyscallOp::SYS_REPLAY_STATUS:  return "REPLAY_STATUS";
         case SyscallOp::SYS_ASYNC_POLL:  return "ASYNC_POLL";
+        case SyscallOp::SYS_LLM_REPORT:  return "LLM_REPORT";
+        case SyscallOp::SYS_HELLO:       return "HELLO";
         case SyscallOp::SYS_EXIT:      return "EXIT";
         default: return "UNKNOWN";
     }

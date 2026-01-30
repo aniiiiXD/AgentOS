@@ -221,6 +221,15 @@ class RemoteAgentClient:
 
     # High-level API (compatible with CloveClient)
 
+    def hello(self) -> dict:
+        response = self.call(SyscallOp.SYS_HELLO, "{}")
+        if response:
+            try:
+                return json.loads(response.payload_str)
+            except json.JSONDecodeError:
+                return {"success": False, "error": response.payload_str}
+        return {"success": False, "error": "No response"}
+
     def echo(self, message: str) -> Optional[str]:
         response = self.call(SyscallOp.SYS_NOOP, message)
         return response.payload_str if response else None
@@ -243,10 +252,17 @@ class RemoteAgentClient:
             payload["temperature"] = temperature
         if model:
             payload["model"] = model
-        return call_llm_service(payload)
+        result = call_llm_service(payload)
+
+        if self._connected and result.get("success"):
+            tokens = int(result.get("tokens", 0) or 0)
+            report = {"tokens": tokens, "success": True}
+            self.call(SyscallOp.SYS_LLM_REPORT, json.dumps(report))
+
+        return result
 
     def exec(self, command: str, cwd: str = None, timeout: int = 30) -> dict:
-        payload = {"command": command, "timeout": timeout}
+        payload = {"command": command, "timeout": timeout, "async": False}
         if cwd:
             payload["cwd"] = cwd
         response = self.call(SyscallOp.SYS_EXEC, json.dumps(payload))
@@ -329,7 +345,7 @@ class RemoteAgentClient:
 
     def http(self, url: str, method: str = "GET", headers: dict = None,
              body: str = None, timeout: int = 30) -> dict:
-        payload = {"url": url, "method": method, "timeout": timeout}
+        payload = {"url": url, "method": method, "timeout": timeout, "async": False}
         if headers:
             payload["headers"] = headers
         if body:

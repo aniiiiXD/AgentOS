@@ -104,6 +104,7 @@ public:
 private:
     static ipc::Message think_sync(KernelContext& context, const ipc::Message& msg);
     ipc::Message handle_think(const ipc::Message& msg);
+    ipc::Message handle_report(const ipc::Message& msg);
     KernelContext& context_;
 };
 

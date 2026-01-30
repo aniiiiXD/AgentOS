@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <regex>
 #include <filesystem>
+#include <strings.h>
 
 namespace fs = std::filesystem;
 
@@ -49,6 +50,7 @@ AgentPermissions AgentPermissions::from_json(const nlohmann::json& j) {
         for (const auto& cmd : j["exec"]) {
             perms.allowed_commands.push_back(cmd.get<std::string>());
         }
+        perms.can_exec = true;
     }
     if (j.contains("blocked_commands")) {
         for (const auto& cmd : j["blocked_commands"]) {
@@ -62,6 +64,14 @@ AgentPermissions AgentPermissions::from_json(const nlohmann::json& j) {
             perms.allowed_domains.push_back(domain.get<std::string>());
         }
         if (!perms.allowed_domains.empty()) {
+            perms.can_http = true;
+        }
+    }
+    if (j.contains("http_methods")) {
+        for (const auto& method : j["http_methods"]) {
+            perms.allowed_http_methods.push_back(method.get<std::string>());
+        }
+        if (!perms.allowed_http_methods.empty()) {
             perms.can_http = true;
         }
     }
@@ -97,6 +107,7 @@ nlohmann::json AgentPermissions::to_json() const {
     j["exec"] = allowed_commands;
     j["blocked_commands"] = blocked_commands;
     j["network"] = allowed_domains;
+    j["http_methods"] = allowed_http_methods;
 
     j["llm"]["max_tokens"] = max_llm_tokens;
     j["llm"]["max_calls"] = max_llm_calls;
@@ -126,10 +137,12 @@ AgentPermissions AgentPermissions::from_level(PermissionLevel level) {
             perms.blocked_paths.clear();  // Clear blocks for unrestricted
             perms.blocked_commands.clear();
             perms.allowed_domains.push_back("*");  // Allow all domains for unrestricted
+            perms.allowed_http_methods.push_back("*");  // Allow all methods for unrestricted
+            perms.allowed_commands.push_back("*");  // Allow all commands for unrestricted
             break;
 
         case PermissionLevel::STANDARD:
-            perms.can_exec = true;
+            perms.can_exec = false;
             perms.can_read = true;
             perms.can_write = true;
             perms.can_think = true;
@@ -138,7 +151,7 @@ AgentPermissions AgentPermissions::from_level(PermissionLevel level) {
             break;
 
         case PermissionLevel::SANDBOXED:
-            perms.can_exec = true;
+            perms.can_exec = false;
             perms.can_read = true;
             perms.can_write = true;
             perms.can_think = true;
@@ -255,13 +268,16 @@ bool AgentPermissions::can_execute_command(const std::string& command) const {
         }
     }
 
-    // If no allowed commands specified, allow all (except blocked)
+    // If no allowed commands specified, deny all
     if (allowed_commands.empty()) {
-        return true;
+        return false;
     }
 
     // Check if command starts with any allowed prefix
     for (const auto& allowed : allowed_commands) {
+        if (allowed == "*") {
+            return true;
+        }
         if (PermissionChecker::command_matches(command, allowed)) {
             return true;
         }
@@ -285,6 +301,22 @@ bool AgentPermissions::can_access_domain(const std::string& domain) const {
         }
     }
 
+    return false;
+}
+
+bool AgentPermissions::can_http_method(const std::string& method) const {
+    if (!can_http) return false;
+    if (allowed_http_methods.empty()) {
+        return false;
+    }
+    for (const auto& allowed : allowed_http_methods) {
+        if (allowed == "*") {
+            return true;
+        }
+        if (strcasecmp(allowed.c_str(), method.c_str()) == 0) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -326,8 +358,21 @@ bool PermissionChecker::path_matches(const std::string& path, const std::string&
         }
     }
 
+    auto has_parent_ref = [](const std::string& value) {
+        for (const auto& part : fs::path(value)) {
+            if (part == "..") {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (has_parent_ref(path) || has_parent_ref(expanded_pattern)) {
+        return false;
+    }
+
     // Use fnmatch for glob-style matching
-    return fnmatch(expanded_pattern.c_str(), path.c_str(), FNM_PATHNAME) == 0;
+    return fnmatch(expanded_pattern.c_str(), path.c_str(), FNM_PATHNAME | FNM_NOESCAPE) == 0;
 }
 
 bool PermissionChecker::command_matches(const std::string& command, const std::string& prefix) {
