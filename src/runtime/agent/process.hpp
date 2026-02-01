@@ -43,8 +43,8 @@ public:
     // Check if running
     bool is_running() const;
 
-    // Get exit code
-    int exit_code() const { return exit_code_; }
+    // Get exit code (fetches from sandbox if available)
+    int exit_code() const;
 
     // Event callback
     void set_event_callback(AgentEventCallback callback);

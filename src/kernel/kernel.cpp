@@ -326,7 +326,10 @@ void Kernel::on_client_event(int fd, uint32_t events) {
     // Handle errors and hangups
     if (events & (EPOLLHUP | EPOLLERR)) {
         reactor_->remove(fd);
-        socket_server_->remove_client(fd);
+        uint32_t agent_id = socket_server_->remove_client(fd);
+        if (agent_id > 0) {
+            context_->mailbox_registry.unregister(agent_id);
+        }
         return;
     }
 
@@ -334,7 +337,10 @@ void Kernel::on_client_event(int fd, uint32_t events) {
     if (events & EPOLLIN) {
         if (!socket_server_->handle_client(fd)) {
             reactor_->remove(fd);
-            socket_server_->remove_client(fd);
+            uint32_t agent_id = socket_server_->remove_client(fd);
+            if (agent_id > 0) {
+                context_->mailbox_registry.unregister(agent_id);
+            }
             return;
         }
     }
@@ -343,7 +349,10 @@ void Kernel::on_client_event(int fd, uint32_t events) {
     if (events & EPOLLOUT) {
         if (!socket_server_->flush_client(fd)) {
             reactor_->remove(fd);
-            socket_server_->remove_client(fd);
+            uint32_t agent_id = socket_server_->remove_client(fd);
+            if (agent_id > 0) {
+                context_->mailbox_registry.unregister(agent_id);
+            }
             return;
         }
     }

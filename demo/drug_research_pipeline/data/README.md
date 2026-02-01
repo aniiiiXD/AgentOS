@@ -1,64 +1,77 @@
-# Dataset Preparation Guide
+# Drug Research Pipeline Data
 
-This demo expects a small molecule dataset in JSON format.
+This directory contains datasets for the drug research ML pipeline.
 
-## Folder
+## Quick Start
 
-Put datasets in:
-
-```
-demo/drug_research_pipeline/data/
-```
-
-## Expected JSON schema
-
-```json
-{
-  "molecules": [
-    {
-      "id": "m1",
-      "smiles": "CCO",
-      "label": 1,
-      "activity": 0.42
-    }
-  ]
-}
-```
-
-### Field notes
-
-- `id` (string): unique molecule id
-- `smiles` (string): SMILES string
-- `label` (int): 0/1 class label
-- `activity` (float): optional continuous proxy
-
-## Update config
-
-Point the pipeline to your dataset by editing:
-
-`demo/drug_research_pipeline/configs/dataset.yaml`
-
-Example:
-
-```yaml
-name: "custom_dataset"
-version: "v1"
-path: "data/my_dataset.json"
-seed: 1337
-num_molecules: 0
-```
-
-If `path` is set, the loader can be updated later to prefer the file over synthetic generation.
-
-## Quick validation (optional)
+### Prerequisites
 
 ```bash
-python3 - <<'PY'
-import json
-from pathlib import Path
-p = Path('demo/drug_research_pipeline/data/my_dataset.json')
-obj = json.loads(p.read_text())
-assert 'molecules' in obj and isinstance(obj['molecules'], list)
-print('ok:', len(obj['molecules']))
-PY
+pip install PyTDC pandas rdkit scikit-learn
+```
+
+### Download Data
+
+```bash
+# Download default dataset (hERG - cardiac toxicity)
+python download_data.py
+
+# Download a specific dataset
+python download_data.py --dataset AMES
+
+# List all available datasets
+python download_data.py --list
+
+# Download all datasets
+python download_data.py --all
+```
+
+## Available Datasets
+
+| Dataset | Task | Description |
+|---------|------|-------------|
+| **hERG** | Binary | Cardiac toxicity - hERG ion channel blockade |
+| **AMES** | Binary | Mutagenicity - Ames test for genotoxicity |
+| **BBBP** | Binary | Blood-brain barrier penetration |
+| **CYP2D6_Substrate** | Binary | CYP2D6 enzyme substrate (drug metabolism) |
+| **Caco2_Wang** | Regression | Caco-2 cell permeability (intestinal absorption) |
+| **Lipophilicity_AstraZeneca** | Regression | Lipophilicity (LogD) |
+| **Solubility_AqSolDB** | Regression | Aqueous solubility |
+| **ClinTox** | Binary | Clinical trial toxicity |
+| **HIV** | Binary | HIV replication inhibition |
+
+## Data Source
+
+All datasets are from [Therapeutics Data Commons (TDC)](https://tdcommons.ai/), a comprehensive resource for AI-ready drug discovery datasets.
+
+## File Structure
+
+After downloading, each dataset will have:
+
+```
+data/
+├── download_data.py           # Download script
+├── README.md                  # This file
+├── <dataset>_train.csv        # Training split
+├── <dataset>_valid.csv        # Validation split
+├── <dataset>_test.csv         # Test split
+├── <dataset>_full.csv         # Combined dataset
+└── <dataset>_metadata.json    # Dataset metadata
+```
+
+## Automatic Download
+
+If data is not present when running the pipeline, the `load_data` stage will automatically download the configured dataset using TDC.
+
+## Citation
+
+If you use TDC datasets, please cite:
+
+```bibtex
+@article{Huang2021tdc,
+  title={Therapeutics Data Commons: Machine Learning Datasets and Tasks for Drug Discovery and Development},
+  author={Huang, Kexin and Fu, Tianfan and others},
+  journal={NeurIPS Datasets and Benchmarks},
+  year={2021}
+}
 ```

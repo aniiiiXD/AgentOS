@@ -27,6 +27,7 @@ struct RegisterResult {
 class AgentMailboxRegistry {
 public:
     RegisterResult register_name(uint32_t agent_id, const std::string& name);
+    void unregister(uint32_t agent_id);
     std::optional<uint32_t> resolve_name(const std::string& name) const;
     std::string get_name(uint32_t agent_id) const;
 

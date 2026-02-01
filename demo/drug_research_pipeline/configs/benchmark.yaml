@@ -1,0 +1,34 @@
+# Benchmark Suite Configuration
+# Controls what experiments to run in parallel
+
+# Datasets to benchmark (from TDC)
+datasets:
+  - hERG       # Cardiac toxicity
+  - AMES       # Mutagenicity
+  - BBBP       # Blood-brain barrier
+  - ClinTox    # Clinical trial toxicity
+  # - HIV      # Larger dataset (~40k molecules) - uncomment for stress test
+
+# Featurization methods
+features:
+  - morgan       # Morgan circular fingerprints (1024 bits)
+  - maccs        # MACCS structural keys (166 bits)
+  - descriptors  # RDKit molecular descriptors (9 features)
+
+# ML Models to train
+models:
+  - random_forest
+  - gradient_boosting
+  - logistic_regression
+  - svm
+  # - xgboost  # Requires: pip install xgboost
+
+# Parallelization
+max_parallel: 8  # Max concurrent processes
+
+# Resource limits per worker (override clove_limits.yaml)
+worker_limits:
+  memory_mb: 512
+  cpu_quota: 100000
+  max_pids: 16
+  timeout_s: 120

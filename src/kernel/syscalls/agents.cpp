@@ -22,7 +22,9 @@ ipc::Message AgentSyscalls::handle_spawn(const ipc::Message& msg) {
         json j = json::parse(msg.payload_str());
 
         runtime::AgentConfig config;
-        config.name = j.value("name", "agent_" + std::to_string(runtime::AgentProcess::generate_id()));
+        // Use ternary to avoid eager evaluation of generate_id() when name is provided
+        config.name = j.contains("name") ? j["name"].get<std::string>()
+            : "agent_" + std::to_string(runtime::AgentProcess::generate_id());
         config.script_path = j.value("script", "");
         config.python_path = j.value("python", "python3");
         config.sandboxed = context_.config.enable_sandboxing && j.value("sandboxed", true);

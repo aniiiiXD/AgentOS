@@ -92,6 +92,21 @@ bower_components/
 # Documentation
 docs/_build/
 
+# Drug discovery demo artifacts
+demo/drug_research_pipeline/artifacts/
+demo/drug_research_pipeline/benchmark_results/
+demo/drug_research_pipeline/benchmark_results_standalone/
+demo/drug_research_pipeline/benchmark_comparison/
+demo/drug_research_pipeline/data/*_train.csv
+demo/drug_research_pipeline/data/*_valid.csv
+demo/drug_research_pipeline/data/*_test.csv
+demo/drug_research_pipeline/data/*_full.csv
+demo/drug_research_pipeline/data/*_metadata.json
+demo/drug_research_pipeline/data/*_train.tab
+demo/drug_research_pipeline/data/*_valid.tab
+demo/drug_research_pipeline/data/*_test.tab
+demo/drug_research_pipeline/data/*_full.tab
+
 # Local development
 .local/
 .venv/

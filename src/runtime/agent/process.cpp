@@ -172,6 +172,14 @@ bool AgentProcess::is_running() const {
     return sandbox_ && sandbox_->is_running();
 }
 
+int AgentProcess::exit_code() const {
+    // Fetch from sandbox if available (sandbox updates exit code when process exits)
+    if (sandbox_) {
+        return sandbox_->exit_code();
+    }
+    return exit_code_;
+}
+
 void AgentProcess::set_event_callback(AgentEventCallback callback) {
     event_callback_ = std::move(callback);
 }

@@ -1,0 +1,14 @@
+{
+  "dataset_name": "BBBP",
+  "total_samples": 2030,
+  "splits": {
+    "train": 1421,
+    "valid": 203,
+    "test": 406
+  },
+  "files": {
+    "train": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/bbbp_train.csv",
+    "valid": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/bbbp_valid.csv",
+    "test": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/bbbp_test.csv"
+  }
+}

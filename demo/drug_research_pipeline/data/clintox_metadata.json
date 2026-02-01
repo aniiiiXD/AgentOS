@@ -1,0 +1,14 @@
+{
+  "dataset_name": "ClinTox",
+  "total_samples": 1478,
+  "splits": {
+    "train": 1034,
+    "valid": 148,
+    "test": 296
+  },
+  "files": {
+    "train": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/clintox_train.csv",
+    "valid": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/clintox_valid.csv",
+    "test": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/clintox_test.csv"
+  }
+}

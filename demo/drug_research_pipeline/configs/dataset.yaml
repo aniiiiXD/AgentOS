@@ -1,5 +1,14 @@
-# Synthetic dataset config
-name: "synthetic_small"
-version: "v0"
-seed: 1337
-num_molecules: 12
+# Dataset configuration for TDC (Therapeutics Data Commons)
+# Available datasets: hERG, AMES, BBBP, CYP2D6_Substrate, Caco2_Wang,
+#                     Lipophilicity_AstraZeneca, Solubility_AqSolDB, ClinTox, HIV
+
+dataset: "HIV"  # HIV replication inhibition (~40k molecules)
+
+# Alternative datasets to try:
+# dataset: "AMES"     # Mutagenicity prediction
+# dataset: "BBBP"     # Blood-brain barrier penetration
+# dataset: "ClinTox"  # Clinical trial toxicity
+
+# Failure injection (for testing Clove's recovery)
+fail_once: false
+fail_mode: "exception"  # memory | exception | exit | timeout | malformed

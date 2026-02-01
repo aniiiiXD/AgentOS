@@ -1,25 +1,35 @@
-# Clove limits + retry policy
+# Clove resource limits and retry policy
+
+# Per-stage resource limits
 limits:
-  load_data: { memory: 134217728, cpu_quota: 50000, max_pids: 16 }
-  featurize: { memory: 268435456, cpu_quota: 75000, max_pids: 16 }
-  train: { memory: 268435456, cpu_quota: 100000, max_pids: 16 }
-  evaluate: { memory: 134217728, cpu_quota: 50000, max_pids: 16 }
-  report: { memory: 67108864, cpu_quota: 50000, max_pids: 8 }
-  archive: { memory: 67108864, cpu_quota: 50000, max_pids: 8 }
+  # Standard pipeline stages
+  load_data: { memory: 268435456, cpu_quota: 50000, max_pids: 16 }   # 256 MB
+  featurize: { memory: 536870912, cpu_quota: 75000, max_pids: 16 }   # 512 MB
+  train: { memory: 536870912, cpu_quota: 100000, max_pids: 16 }      # 512 MB
+  evaluate: { memory: 268435456, cpu_quota: 50000, max_pids: 16 }    # 256 MB
+  report: { memory: 134217728, cpu_quota: 50000, max_pids: 8 }       # 128 MB
+  archive: { memory: 134217728, cpu_quota: 50000, max_pids: 8 }      # 128 MB
 
+  # Benchmark worker (runs full pipeline per experiment)
+  benchmark_worker: { memory: 1073741824, cpu_quota: 100000, max_pids: 32 }  # 1 GB
+
+# Stage timeouts (seconds)
 timeouts:
-  load_data: 15
-  featurize: 20
-  train: 20
-  evaluate: 15
-  report: 10
+  load_data: 30
+  featurize: 60
+  train: 60
+  evaluate: 30
+  report: 15
   archive: 10
+  benchmark_worker: 180  # 3 minutes per experiment
 
+# Retry policy
 retries:
   default:
     max_attempts: 3
     resend_interval_s: 2
 
+# Process restart policy
 restart_policy: "on-failure"
 max_restarts: 2
 restart_window: 300

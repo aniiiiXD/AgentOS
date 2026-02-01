@@ -1,4 +1,17 @@
-# Featurization config
-method: "simple_counts"
+# Featurization configuration
+# Available methods: morgan, rdkit, maccs, descriptors, combined
+
+method: "morgan"  # Morgan fingerprints (ECFP-like circular fingerprints)
+
+# Morgan fingerprint parameters
+radius: 2         # Radius 2 = ECFP4, Radius 3 = ECFP6
+n_bits: 1024      # Number of bits in fingerprint vector
+
+# Alternative configurations:
+# method: "maccs"        # MACCS structural keys (166 bits)
+# method: "descriptors"  # RDKit molecular descriptors (9 features)
+# method: "combined"     # Morgan + descriptors combined
+
+# Failure injection (for testing)
 fail_once: false
-fail_mode: "memory"  # memory | exception | exit | timeout
+fail_mode: "memory"  # memory | exception | exit | timeout | malformed

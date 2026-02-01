@@ -53,8 +53,8 @@ public:
     // Check if client wants to write
     bool client_wants_write(int client_fd) const;
 
-    // Remove client
-    void remove_client(int client_fd);
+    // Remove client (returns agent_id for cleanup, or 0 if not found)
+    uint32_t remove_client(int client_fd);
 
     // Cleanup
     void stop();

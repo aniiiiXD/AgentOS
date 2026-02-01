@@ -1,7 +1,11 @@
 """Stage: archive artifacts (placeholder)."""
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+# Add parent directory to path so we can import utils
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils import ensure_sdk_on_path, log_line, maybe_fail_once, wait_for_message, write_json
 

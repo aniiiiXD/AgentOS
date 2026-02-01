@@ -22,6 +22,21 @@ RegisterResult AgentMailboxRegistry::register_name(uint32_t agent_id, const std:
     return result;
 }
 
+void AgentMailboxRegistry::unregister(uint32_t agent_id) {
+    {
+        std::lock_guard<std::mutex> lock(registry_mutex_);
+        auto it = ids_to_names_.find(agent_id);
+        if (it != ids_to_names_.end()) {
+            names_.erase(it->second);
+            ids_to_names_.erase(it);
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(mailbox_mutex_);
+        mailboxes_.erase(agent_id);
+    }
+}
+
 std::optional<uint32_t> AgentMailboxRegistry::resolve_name(const std::string& name) const {
     std::lock_guard<std::mutex> lock(registry_mutex_);
     auto it = names_.find(name);

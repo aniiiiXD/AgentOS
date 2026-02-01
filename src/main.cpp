@@ -104,7 +104,7 @@ void print_ready_message(const std::string& socket_path) {
 
 void setup_logging() {
     clove::core::init_logger();
-    clove::core::set_log_level(spdlog::level::debug);
+    clove::core::set_log_level(spdlog::level::info);
     spdlog::set_pattern("    %^[%l]%$ %v");
 }
 

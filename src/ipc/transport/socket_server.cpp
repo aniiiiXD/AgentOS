@@ -235,12 +235,15 @@ bool SocketServer::client_wants_write(int client_fd) const {
     return it->second->want_write;
 }
 
-void SocketServer::remove_client(int client_fd) {
+uint32_t SocketServer::remove_client(int client_fd) {
     auto it = clients_.find(client_fd);
     if (it != clients_.end()) {
+        uint32_t agent_id = it->second->agent_id;
         close(client_fd);
         clients_.erase(it);
+        return agent_id;
     }
+    return 0;
 }
 
 void SocketServer::stop() {

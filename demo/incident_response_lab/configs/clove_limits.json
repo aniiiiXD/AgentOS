@@ -1,0 +1,23 @@
+{
+  "limits": {
+    "log_watcher": {
+      "memory_mb": 128,
+      "cpu": 1
+    },
+    "anomaly_triager": {
+      "memory_mb": 128,
+      "cpu": 1
+    },
+    "remediation_executor": {
+      "memory_mb": 192,
+      "cpu": 1
+    },
+    "auditor": {
+      "memory_mb": 128,
+      "cpu": 1
+    }
+  },
+  "restart_policy": "on-failure",
+  "max_restarts": 1,
+  "restart_window": 60
+}

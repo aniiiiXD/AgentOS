@@ -1,0 +1,25 @@
+{
+  "dataset_name": "HIV",
+  "category": "HTS",
+  "task_type": "binary",
+  "description": "HIV replication inhibition - antiviral activity",
+  "total_samples": 41127,
+  "splits": {
+    "train": 28789,
+    "valid": 4113,
+    "test": 8225
+  },
+  "files": {
+    "train": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/hiv_train.csv",
+    "valid": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/hiv_valid.csv",
+    "test": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/hiv_test.csv",
+    "full": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/hiv_full.csv"
+  },
+  "columns": [
+    "Drug_ID",
+    "Drug",
+    "Y"
+  ],
+  "label_column": "Y",
+  "smiles_column": "Drug"
+}

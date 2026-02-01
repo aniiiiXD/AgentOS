@@ -1,0 +1,14 @@
+{
+  "dataset_name": "AMES",
+  "total_samples": 7278,
+  "splits": {
+    "train": 5094,
+    "valid": 728,
+    "test": 1456
+  },
+  "files": {
+    "train": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/ames_train.csv",
+    "valid": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/ames_valid.csv",
+    "test": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/ames_test.csv"
+  }
+}

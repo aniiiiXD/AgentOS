@@ -1,0 +1,22 @@
+{
+  "dataset_name": "hERG",
+  "total_samples": 655,
+  "splits": {
+    "train": 458,
+    "valid": 66,
+    "test": 131
+  },
+  "files": {
+    "train": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/herg_train.csv",
+    "valid": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/herg_valid.csv",
+    "test": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/herg_test.csv",
+    "full": "/home/anixd/Documents/CLOVE/demo/drug_research_pipeline/data/herg_full.csv"
+  },
+  "columns": [
+    "Drug_ID",
+    "Drug",
+    "Y"
+  ],
+  "label_column": "Y",
+  "smiles_column": "Drug"
+}

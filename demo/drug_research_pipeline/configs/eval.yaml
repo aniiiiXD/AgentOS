@@ -1,3 +1,14 @@
-# Evaluation config
-metrics:
-  - "accuracy"
+# Evaluation configuration
+# All metrics are computed automatically:
+# - accuracy, balanced_accuracy
+# - precision, recall, f1
+# - specificity, mcc (Matthews Correlation Coefficient)
+# - auc_roc, average_precision
+# - confusion_matrix
+
+# Primary metric for model selection (informational)
+primary_metric: "auc_roc"
+
+# Failure injection (for testing)
+fail_once: false
+fail_mode: "exception"

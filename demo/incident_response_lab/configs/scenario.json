@@ -1,0 +1,32 @@
+{
+  "log_lines": [
+    "2026-01-30T18:02:11Z INFO service=api msg=\"startup ok\"",
+    "2026-01-30T18:02:45Z WARN service=auth msg=\"AUTH_FAIL user=alice src=10.0.0.12\"",
+    "2026-01-30T18:03:10Z ERROR service=net msg=\"PORT_SCAN src=10.0.0.5 dst=10.0.0.2\"",
+    "2026-01-30T18:04:05Z ERROR service=db msg=\"DISK_FULL volume=/var/lib/data usage=99%\""
+  ],
+  "rules": {
+    "AUTH_FAIL": {
+      "severity": "medium",
+      "title": "Authentication failures"
+    },
+    "PORT_SCAN": {
+      "severity": "high",
+      "title": "Port scan detected"
+    },
+    "DISK_FULL": {
+      "severity": "critical",
+      "title": "Disk saturation"
+    }
+  },
+  "remediation_playbook": {
+    "PORT_SCAN": {
+      "action": "block_ip",
+      "description": "Simulate blocking the offending source"
+    },
+    "DISK_FULL": {
+      "action": "cleanup_disk",
+      "description": "Simulate emergency cleanup"
+    }
+  }
+}
